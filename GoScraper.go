@@ -23,13 +23,20 @@ func main() {
 		textbox.Append(textbody, false)
 		// End of textbody
 
-		// Creates and handles search box logic
+		// Creates and handles url input
 		input := ui.NewSearchEntry()
-		searchbutton := ui.NewButton("Search")
 		urlbox := ui.NewVerticalBox()
 		urlbox.Append(ui.NewLabel("Insert URL:"), false)
-		urlbox.Append(input, false)
-		urlbox.Append(searchbutton, false)
+		urlbox.SetPadded(true)
+		urlbox.Append(input,false)
+		// End of url input
+
+
+		// Start of search box
+		searchbutton := ui.NewButton("Search")
+		searchbox := ui.NewHorizontalBox()
+		searchbox.SetPadded(true)
+		searchbox.Append(searchbutton, true)
 		searchbutton.OnClicked(func(button *ui.Button) {
 			response = httpRequest(input.Text())
 			textbody.SetText(response)
@@ -42,34 +49,52 @@ func main() {
 		combobox.Append("TXT")
 		combobox.Append("CSV")
 		combobox.SetSelected(0)
-		vbox := ui.NewVerticalBox()
+		vbox := ui.NewHorizontalBox()
 		vbox.SetPadded(true)
 		vbox.Append(combobox, false)
 		// End of Combobox
 
+
 		// Start of Save button
 		savebutton := ui.NewButton("Save")
 		savebox := ui.NewHorizontalBox()
+		savebox.SetPadded(true)
 		savebox.Append(savebutton, false)
+		// End of Savebox
 
-		switch combobox.Selected() {
-		case 0:
-			savebutton.OnClicked(func(button *ui.Button) {
-				linesToWrite := response
-				err := ioutil.WriteFile("temp.html", []byte(linesToWrite), 0777)
-				if err != nil {
-					log.Fatal(err)
-				}
-			})
-		case 1:
-			log.Fatal()
-		case 2:
-			log.Fatal()
-		}
+		combobox.OnSelected(func(combobox *ui.Combobox) {
+			switch combobox.Selected() {
+			case 0:
+				savebutton.OnClicked(func(button *ui.Button) {
+					linesToWrite := response
+					err := ioutil.WriteFile("temp.html", []byte(linesToWrite), 0777)
+					if err != nil {
+						log.Fatal(err)
+					}
+				})
+			case 1:
+				savebutton.OnClicked(func(button *ui.Button) {
+					linesToWrite := response
+					err := ioutil.WriteFile("temp.txt", []byte(linesToWrite), 0777)
+					if err != nil {
+						log.Fatal(err)
+					}
+				})
+			case 2:
+				savebutton.OnClicked(func(button *ui.Button) {
+					linesToWrite := response
+					err := ioutil.WriteFile("temp.csv", []byte(linesToWrite), 0777)
+					if err != nil {
+						log.Fatal(err)
+					}
+				})
+			}
+		})
 
-		urlbox.Append(vbox, false)
-		urlbox.Append(textbox, false)
-		urlbox.Append(savebox, false)
+		urlbox.Append(vbox,false)
+		vbox.Append(searchbox, true)
+		urlbox.Append(textbox,false)
+		urlbox.Append(savebox,false)
 
 		window := ui.NewWindow("GoScrape", 500, 500, false)
 		window.SetMargined(true)
@@ -79,6 +104,7 @@ func main() {
 			return true
 		})
 		window.Show()
+
 	})
 	if err != nil {
 		panic(err)
