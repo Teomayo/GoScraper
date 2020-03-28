@@ -11,31 +11,81 @@ import (
 	"github.com/andlabs/ui"
 )
 
+var response = "string"
+
 func main() {
-	createUI()
+	err := ui.Main(func() {
+
+		// creates textbody box for HTML response
+		textbox := ui.NewHorizontalBox()
+		textbox.SetPadded(true)
+		textbody := ui.NewMultilineEntry()
+		textbox.Append(textbody, false)
+		// End of textbody
+
+		// Creates and handles search box logic
+		input := ui.NewSearchEntry()
+		searchbutton := ui.NewButton("Search")
+		urlbox := ui.NewVerticalBox()
+		urlbox.Append(ui.NewLabel("Insert URL:"), false)
+		urlbox.Append(input, false)
+		urlbox.Append(searchbutton, false)
+		searchbutton.OnClicked(func(button *ui.Button) {
+			response = httpRequest(input.Text())
+			textbody.SetText(response)
+		})
+		// End of Search Box
+
+		// Start of Combobox
+		combobox := ui.NewCombobox()
+		combobox.Append("HTML")
+		combobox.Append("TXT")
+		combobox.Append("CSV")
+		combobox.SetSelected(0)
+		vbox := ui.NewVerticalBox()
+		vbox.SetPadded(true)
+		vbox.Append(combobox, false)
+		// End of Combobox
+
+		// Start of Save button
+		savebutton := ui.NewButton("Save")
+		savebox := ui.NewHorizontalBox()
+		savebox.Append(savebutton, false)
+
+		switch combobox.Selected() {
+		case 0:
+			savebutton.OnClicked(func(button *ui.Button) {
+				linesToWrite := response
+				err := ioutil.WriteFile("temp.html", []byte(linesToWrite), 0777)
+				if err != nil {
+					log.Fatal(err)
+				}
+			})
+		case 1:
+			log.Fatal()
+		case 2:
+			log.Fatal()
+		}
+
+		urlbox.Append(vbox, false)
+		urlbox.Append(textbox, false)
+		urlbox.Append(savebox, false)
+
+		window := ui.NewWindow("GoScrape", 500, 500, false)
+		window.SetMargined(true)
+		window.SetChild(urlbox)
+		window.OnClosing(func(*ui.Window) bool {
+			ui.Quit()
+			return true
+		})
+		window.Show()
+	})
+	if err != nil {
+		panic(err)
+
+	}
 }
 
-//type areaHandler struct {}
-//
-//	func(h areaHandler) Draw(a *ui.Area, p *ui.AreaDrawParams) {
-//	return
-//}
-//
-//	func (h areaHandler) MouseEvent(a *ui.Area, me *ui.AreaMouseEvent) {
-//	return
-//}
-//
-//	func (h areaHandler) MouseCrossed(a *ui.Area, left bool) {
-//	return
-//}
-//
-//	func (h areaHandler) DragBroken(a *ui.Area) {
-//	return
-//}
-//
-//	func (h areaHandler) KeyEvent(a *ui.Area, ke *ui.AreaKeyEvent) (handled bool) {
-//	return
-//}
 
 func httpRequest(url string) string {
 	// Create HTTP client with timeout
@@ -66,42 +116,4 @@ func httpRequest(url string) string {
 
 	responsetext := string(body)
 	return responsetext
-}
-
-func createUI() {
-	err := ui.Main(func() {
-		box, searchbutton, input := createSearchBox()
-		//scroll := ui.NewScrollingArea(areaHandler{},300,300 )
-		hbox := ui.NewHorizontalBox()
-		hbox.SetPadded(true)
-		textbody := ui.NewMultilineEntry()
-		hbox.Append(textbody, false)
-		//hbox.Append(scroll, false)
-		box.Append(hbox, false)
-		window := ui.NewWindow("GoScrape", 500, 500, false)
-		window.SetMargined(true)
-		window.SetChild(box)
-		searchbutton.OnClicked(func(*ui.Button) {
-			response := httpRequest(input.Text())
-			textbody.SetText(response)
-		})
-		window.OnClosing(func(*ui.Window) bool {
-			ui.Quit()
-			return true
-		})
-		window.Show()
-	})
-	if err != nil {
-		panic(err)
-	}
-}
-
-func createSearchBox() (*ui.Box, *ui.Button, *ui.Entry) {
-	input := ui.NewSearchEntry()
-	button := ui.NewButton("Search")
-	box := ui.NewVerticalBox()
-	box.Append(ui.NewLabel("Insert URL:"), false)
-	box.Append(input, false)
-	box.Append(button, false)
-	return box, button, input
 }
