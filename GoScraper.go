@@ -1,20 +1,25 @@
 package main
 
 import (
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/andlabs/ui"
 )
 
-var response = "string"
+var response = ""
+var stringmatches = ""
+var matchedtext  []string
 
 func main() {
 	err := ui.Main(func() {
+		// Set regexp pattern
+		var textregex = regexp.MustCompile(`(?m)<p>(.*\.)`)
+
 
 		// creates textbody box for HTML response
 		textbox := ui.NewHorizontalBox()
@@ -40,8 +45,19 @@ func main() {
 		searchbutton.OnClicked(func(button *ui.Button) {
 			response = httpRequest(input.Text())
 			textbody.SetText(response)
+			//matchedtext = textregex.FindAllString(response,-1)
+			for _, match := range textregex.FindAllString(response, -1) {
+				var matches []string
+				matches = append(matches, match)
+				stringmatches = strings.Join(matches,"\n")
+			}
 		})
 		// End of Search Box
+
+		//matchedtext := textregex.FindAllString(response,-1)
+		//stringmatches = strings.Join(matchedtext,",")
+
+
 
 		// Start of Combobox
 		combobox := ui.NewCombobox()
@@ -65,6 +81,7 @@ func main() {
 		combobox.OnSelected(func(combobox *ui.Combobox) {
 			switch combobox.Selected() {
 			case 0:
+				textbody.SetText(response)
 				savebutton.OnClicked(func(button *ui.Button) {
 					linesToWrite := response
 					err := ioutil.WriteFile("temp.html", []byte(linesToWrite), 0777)
@@ -73,8 +90,9 @@ func main() {
 					}
 				})
 			case 1:
+				textbody.SetText(stringmatches)
 				savebutton.OnClicked(func(button *ui.Button) {
-					linesToWrite := response
+					linesToWrite := stringmatches
 					err := ioutil.WriteFile("temp.txt", []byte(linesToWrite), 0777)
 					if err != nil {
 						log.Fatal(err)
@@ -131,14 +149,6 @@ func httpRequest(url string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// Copy data from the response to standard output
-	n, err := io.Copy(os.Stdout, response.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("Number of bytes copied to STDOUT:", n)
 
 	responsetext := string(body)
 	return responsetext
