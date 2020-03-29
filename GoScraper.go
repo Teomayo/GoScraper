@@ -13,12 +13,14 @@ import (
 
 var response = ""
 var stringmatches = ""
-var matchedtext  []string
+//var cleanmatch []string
+var matches []string
 
 func main() {
 	err := ui.Main(func() {
 		// Set regexp pattern
-		var textregex = regexp.MustCompile(`(?m)<p>(.*\.)`)
+		var textregex = regexp.MustCompile(`(?m)<p>(.+)`)
+		//var nosymbolregex = regexp.MustCompile(`(?m)\w+`)
 
 
 		// creates textbody box for HTML response
@@ -36,29 +38,6 @@ func main() {
 		urlbox.Append(input,false)
 		// End of url input
 
-
-		// Start of search box
-		searchbutton := ui.NewButton("Search")
-		searchbox := ui.NewHorizontalBox()
-		searchbox.SetPadded(true)
-		searchbox.Append(searchbutton, true)
-		searchbutton.OnClicked(func(button *ui.Button) {
-			response = httpRequest(input.Text())
-			textbody.SetText(response)
-			//matchedtext = textregex.FindAllString(response,-1)
-			for _, match := range textregex.FindAllString(response, -1) {
-				var matches []string
-				matches = append(matches, match)
-				stringmatches = strings.Join(matches,"\n")
-			}
-		})
-		// End of Search Box
-
-		//matchedtext := textregex.FindAllString(response,-1)
-		//stringmatches = strings.Join(matchedtext,",")
-
-
-
 		// Start of Combobox
 		combobox := ui.NewCombobox()
 		combobox.Append("HTML")
@@ -70,6 +49,31 @@ func main() {
 		vbox.Append(combobox, false)
 		// End of Combobox
 
+		// Start of search box
+		searchbutton := ui.NewButton("Search")
+		searchbox := ui.NewHorizontalBox()
+		searchbox.SetPadded(true)
+		searchbox.Append(searchbutton, true)
+		searchbutton.OnClicked(func(button *ui.Button) {
+			response = httpRequest(input.Text())
+			for _, match := range textregex.FindAllString(response, -1) {
+				matches = append(matches, match)
+				stringmatches = strings.Join(matches," ")
+				//for _,match := range nosymbolregex.FindAllString(stringmatches,-1) {
+				//	cleanmatch = append(cleanmatch, match)
+				//	stringmatches = strings.Join(cleanmatch," ")
+				//}
+			}
+			if combobox.Selected() == 0 {
+				textbody.SetText(response)
+			}	else if combobox.Selected() == 1 {
+				textbody.SetText(stringmatches)
+			}	else {
+				// temporary filler until table extraction is done
+				textbody.SetText(response)
+			}
+		})
+		// End of Search Box
 
 		// Start of Save button
 		savebutton := ui.NewButton("Save")
@@ -114,7 +118,7 @@ func main() {
 		urlbox.Append(textbox,false)
 		urlbox.Append(savebox,false)
 
-		window := ui.NewWindow("GoScrape", 500, 500, false)
+		window := ui.NewWindow("GoScrape", 700, 500, false)
 		window.SetMargined(true)
 		window.SetChild(urlbox)
 		window.OnClosing(func(*ui.Window) bool {
